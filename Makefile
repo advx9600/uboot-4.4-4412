@@ -160,7 +160,7 @@ ifeq ($(HOSTARCH),$(ARCH))
 CROSS_COMPILE ?=
 endif
 
-CROSS_COMPILE = /usr/local/arm/arm-2009q3/bin/arm-none-linux-gnueabi-
+CROSS_COMPILE = /home/abc/Public/compiler/arm-2009q3/arm-2009q3/bin/arm-none-linux-gnueabi-
 
 # load other configuration
 include $(TOPDIR)/config.mk
