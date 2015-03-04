@@ -429,6 +429,33 @@ static void GP_COMMAD_PA(U16 num)
         	Set_2805_CS(1);	
 }
 
+static U16 GP_COMMAD_PA_READ()
+{
+	U32 i,count;
+	SPI_2825_WrReg(0xB7,0x382);	
+	SPI_2825_WrReg(0xBC,0x01);
+	SPI_2825_WrReg(0xBF,0x0a);
+
+	Set_2805_CS(1);
+	Delay_ms(200);
+	printf("C6:0x%X\n",SPI_READ_ID(0xC6));
+	if ((SPI_READ_ID(0xC6)&0x19) !=0x19){
+	   printf("read 0xC6 not ready failed C3:0x%X\n",SPI_READ_ID(0xC3));
+	   return 0xFFFF;
+	}
+	
+	count = SPI_READ_ID(0xC2);
+	printf("readnum:0x%X ",count);
+	if (count >100) count =100;
+	for (i=0;i<count;i++)
+	{
+	    printf("data[%d]:0x%X ",i,SPI_READ_ID(0xFF));
+	} printf("\n");
+
+	return 0xFFFF;
+//	return SPI_READ_ID(cmd);
+}
+
 #define VBP        		(0x10)
 #define LCD_VBPD		VBP
 #define VFP        		(0x10)
@@ -537,7 +564,6 @@ static void lcm_init(void)
 
 void Init_SSD2805_SPI(void)
 {
-#if CONFIG_1
 	Set_RST(0);// ( rGPFDAT &= (~(1<<3))) ;
 	Delay_ms(100);
 	Set_RST(1);//  ( rGPFDAT |= (1<<3) ) ;
@@ -575,15 +601,14 @@ void Init_SSD2805_SPI(void)
 //	Delay_ms(100);	
 	SPI_2825_WrCmd(0x29);*/					//Set LCD driver display on 
 //	PLL configuration 
-	SPI_2825_WrReg(0xba, 0x801E);				//PLL setting,8028   8012
+	SPI_2825_WrReg(0xba, LCD_DSI_CLCK);				//PLL setting,8028   8012
 	SPI_2825_WrReg(0xbb, 0x0006);				//LP clock divider
 	SPI_2825_WrReg(0xb9, 0x0001);				//PLL enable 
 	SPI_2825_WrReg(0xb8, 0x0000);				//VC register 
+	
+	GP_COMMAD_PA_READ();
 	SPI_2825_WrReg(0xb7, 0x0150);				//Generic mode, HS video mode
 	
-#else
-	lcm_init();
-#endif
 	Delay_ms(10);
                         
 
@@ -880,6 +905,7 @@ Delay_ms(200);
 
 	//------------------------------------------------------------------------------------------	
 	Delay_ms(200);
+	GP_COMMAD_PA_READ();
 #if CONFIG_1
 	
 	//Cmd code 3: Access video mode 
@@ -917,7 +943,7 @@ Delay_ms(200);
 	//NS: bit7~0
 	//Fout = Fpre*NS
 	
-	SPI_2825_WrReg(0xba, 0x801E);		//0x8012-PLL setting, select TX_CLK=24MHZ, (24/8)*250 = 750MHZ(8012:24*18=432M;866E:24/6*110=440M,8337:24/3*55=440) 844b
+	SPI_2825_WrReg(0xba, LCD_DSI_CLCK);		//0x8012-PLL setting, select TX_CLK=24MHZ, (24/8)*250 = 750MHZ(8012:24*18=432M;866E:24/6*110=440M,8337:24/3*55=440) 844b
 										//844b:24/4*75=450
 										//8446:24/4*70=420
 										//8332:24/3*50=400
