@@ -41,7 +41,7 @@ static void Delay_ms(U32 ms)
 
 static void Delay_clk_time()
 {
-	Delay_us(10);
+	Delay_us(1);
 }
 
 
@@ -121,9 +121,9 @@ void SPI_Init(void)
 //	Set_CSX(1);
 	Set_SCL(0);	
 	Set_SDI(0);
-	printf("GPBCON:0x%x\n",readl(GPBCON));
-	printf("GPBDATA:0x%x\n",readl(GPBDATA));
-	printf("GPBPUD:0x%x\n",readl(GPBPUD));
+//	printf("GPBCON:0x%x\n",readl(GPBCON));
+//	printf("GPBDATA:0x%x\n",readl(GPBDATA));
+//	printf("GPBPUD:0x%x\n",readl(GPBPUD));
 	
 }
 
@@ -456,109 +456,32 @@ static U16 GP_COMMAD_PA_READ()
 //	return SPI_READ_ID(cmd);
 }
 
-#define VBP        		(0x10)
+#define VBP        		(0xe)
 #define LCD_VBPD		VBP
-#define VFP        		(0x10)
+#define VFP        		(0x0a)
 #define LCD_VFPD		VFP
 #define VPW        		(2)
 #define LCD_VSPW		VPW
 
-#define HBP        		(0x24)
+#define HBP        		(0x56)
 #define LCD_HBPD		HBP
-#define HFP        		(0x18)
+#define HFP        		(0x52)
 #define LCD_HFPD		HFP
-#define HPW        		(2)
+#define HPW        		(4)
 #define LCD_HSPW		HPW
 
-#define LCD_XSIZE_TFT		(1024)
-#define LCD_YSIZE_TFT		(600)
+#define LCD_XSIZE_TFT		(720)
+#define LCD_YSIZE_TFT		(1280)
 #define LCD_WIDTH 		LCD_XSIZE_TFT
 #define LCD_HEIGHT		LCD_YSIZE_TFT
-#define LCD_DSI_CLCK		(0x801E)
+
+// ¿¿¿¿¿¿¿¿SPI¿¿
+#define LCD_DSI_CLCK_LOW		(0x4214)
+#define LCD_DSI_CLCK_NORMAL		(0x822b)
 
 #define MDELAY Delay_ms
-static void init_lcm_registers(void)
-{
-	//LCM_DEBUG("[LCM************]: init_lcm_registers. \n");
-	Write_com(0x00B7);
-	Write_register(0x0302);	
-	//0xB1--B5 ¿¿¿¿¿¿RGB timing
-	Write_com(0x00B1);
-	Write_register((VPW<<8)+HPW);
-	Write_com(0x00B2);
-	Write_register(((VPW+VBP)<<8)+(HPW+HBP));
-	Write_com(0x00B3);
-	Write_register((VFP<<8)+HFP);
-	Write_com(0x00B4);
-	Write_register(LCD_WIDTH);
-	Write_com(0x00B5);
-	Write_register(LCD_HEIGHT);
-	
-	Write_com(0x00B6);
-	Write_register(0x000B);
-	Write_com(0x00DE);
-	//Write_register(0x0001);//2 Lane MIPI
-	//Write_register(0x0002);//3 Lane MIPI
-	Write_register(0x0003);//4 Lane MIPI
-	Write_com(0x00D6);
-	Write_register(0x0004);//Color order:RGB
-	//Write_register(0x0005);//Color order:BGR
-	Write_com(0x00B9);
-	Write_register(0x0000);
-	
-	Write_com(0x00BA);
-	Write_register(LCD_DSI_CLCK);//12MHz
-	Write_com(0x00BB);
-	Write_register(0x0009);
-	
-	Write_com(0x00B9);
-	Write_register(0x0001);
-	
-	Write_com(0x00B7);
-	Write_register(0x0302);//0x034b
-	Write_com(0x00B8);
-	Write_register(0x0000);
-	
-	Write_com(0x00BC);
-	Write_register(0x0001);
-	Write_com(0x00BF);
-	Write_register(0x0011);//LCD Sleep out
-	
-  MDELAY(100);//Delay¿¿¿¿driver ic¿¿¿¿
-
-	Write_com(0x00BC);
-	Write_register(0x0001);
-	Write_com(0x00BF);
-	Write_register(0x0029);//LCD display on
-
-	Write_com(0x00B7);
-	Write_register(0x030b);//video mode on
-	
-}
-
 #define SET_RESET_PIN	Set_RST
 #define Read_Register	SPI_READ_ID
-static void lcm_init(void)
-{
-	unsigned short id;
-	unsigned short B6, B7, B9;
-
-	SET_RESET_PIN(1);
-	MDELAY(30);
-	SET_RESET_PIN(0);
-	MDELAY(20);
-	SET_RESET_PIN(1);
-	MDELAY(30);
-	init_lcm_registers();
-	
-	id = Read_Register(0x00b0);
-	B6 = Read_Register(0x00b6);
-	B7 = Read_Register(0x00b7);
-	B9 = Read_Register(0x00b9);
-	
-        printf("Uboot--SSD2828 id is: %x, B6=%x, B7=%x, b9=%x \n",id, B6, B7, B9);
-    
-}
 
 static U32 GPX2DATA=0x11000c44;
 static void lcd_reset()
@@ -573,7 +496,7 @@ static void lcd_reset()
 
 	val |= 0x2;
 	Outp32(GPX2DATA,val);	
-	Delay_ms(100);
+	Delay_ms(10);
 
 	val &= ~0x2;
 	Outp32(GPX2DATA,val);	
@@ -581,15 +504,15 @@ static void lcd_reset()
 
 	val |= 0x2;
 	Outp32(GPX2DATA,val);	
-	Delay_ms(100);
+	Delay_ms(20);
 
 	val &= ~0x2;
 	Outp32(GPX2DATA,val);	
-	Delay_ms(100);
+	Delay_ms(20);
 
 	val |= 0x2;
 	Outp32(GPX2DATA,val);	
-	Delay_ms(500);
+	Delay_ms(30);
 
 }
 
@@ -601,9 +524,9 @@ void Init_SSD2805(void)
 	lcd_reset();
 
 	Set_RST(0);// ( rGPFDAT &= (~(1<<3))) ;
-	Delay_ms(100);
+	Delay_ms(20);
 	Set_RST(1);//  ( rGPFDAT |= (1<<3) ) ;
-	Delay_ms(1000);
+	Delay_ms(30);
 
  SPI_2825_WrCmd(0xb7);
 			        SPI_WriteData(0x50);//50=TX_CLK 70=PCLK
@@ -617,9 +540,11 @@ void Init_SSD2805(void)
 			        SPI_WriteData(0x00);//1=PLL disable
 			        SPI_WriteData(0x00);
                                //TX_CLK/MS should be between 5Mhz to100Mhz
-			        SPI_2825_WrCmd(0xBA);//PLL=(TX_CLK/MS)*NS 8228=480M 4428=240M  061E=120M 4214=240M 821E=360M 8219=300M
-			        SPI_WriteData(0x14);//D7-0=NS(0x01 : NS=1)
-			        SPI_WriteData(0x42);//D15-14=PLL¿¿ 00=62.5-125 01=126-250 10=251-500 11=501-1000  DB12-8=MS(01:MS=1)
+				SPI_2825_WrReg(0xBA,LCD_DSI_CLCK_LOW);
+				
+			       // SPI_2825_WrCmd(0xBA);//PLL=(TX_CLK/MS)*NS 8228=480M 4428=240M  061E=120M 4214=240M 821E=360M 8219=300M
+			        //SPI_WriteData(0x14);//D7-0=NS(0x01 : NS=1)
+			        //SPI_WriteData(0x42);//D15-14=PLL¿¿ 00=62.5-125 01=126-250 10=251-500 11=501-1000  DB12-8=MS(01:MS=1)
 
 			        SPI_2825_WrCmd(0xBB);//LP Clock Divider LP clock = 400MHz / LPD / 8 = 240 / 8 / 4 = 7.5MHz
 			        SPI_WriteData(0x03);//D5-0=LPD=0x1 ¿ Divide by 2
@@ -657,9 +582,10 @@ SPI_2825_WrCmd(0xb9);
 SPI_WriteData(0x00);//1=PLL disable
 SPI_WriteData(0x00);
 
-SPI_2825_WrCmd(0xBA);//PLL=(TX_CLK/MS)*NS 8228=480M 4428=240M  061E=120M 4214=240M 821E=360M 8219=300M 8225=444M 8224=432
-SPI_WriteData(0x2b);//D7-0=NS(0x01 : NS=1)   //0X28
-SPI_WriteData(0x82);//D15-14=PLL¿¿ 00=62.5-125 01=126-250 10=251-500 11=501-1000  DB12-8=MS(01:MS=1) //0X82
+SPI_2825_WrReg(0xBA,LCD_DSI_CLCK_NORMAL);
+//SPI_2825_WrCmd(0xBA);//PLL=(TX_CLK/MS)*NS 8228=480M 4428=240M  061E=120M 4214=240M 821E=360M 8219=300M 8225=444M 8224=432
+//SPI_WriteData(0x2b);//D7-0=NS(0x01 : NS=1)   //0X28
+//SPI_WriteData(0x82);//D15-14=PLL¿¿ 00=62.5-125 01=126-250 10=251-500 11=501-1000  DB12-8=MS(01:MS=1) //0X82
 
 SPI_2825_WrCmd(0xBB);//LP Clock Divider LP clock = 400MHz / LPD / 8 = 480 / 8/ 8 = 7.5MHz
 SPI_WriteData(0x07);//D5-0=LPD=0x1 ¿ Divide by 2
@@ -698,11 +624,11 @@ printf("2828:0x%X\n",SPI_READ_ID(0xb0));
 GP_COMMAD_PA_READ();
 	/**************************************************/
  
-   SPI_2825_WrReg(0xb1,0x0204);	//Vertical sync and horizontal sync active period 
-	SPI_2825_WrReg(0xb2,0x0e56);	//Vertical and horizontal back porch period  
-	SPI_2825_WrReg(0xb3,0x0a52);	//Vertical and horizontal front porch period 
-	SPI_2825_WrReg(0xb4, 720);
-	SPI_2825_WrReg(0xb5, 1280);
+	   SPI_2825_WrReg(0xb1,(LCD_VSPW<<8)|LCD_HSPW);	//Vertical sync and horizontal sync active period 
+	SPI_2825_WrReg(0xb2,(LCD_VBPD<<8)|LCD_HBPD);	//Vertical and horizontal back porch period  
+	SPI_2825_WrReg(0xb3,(LCD_VFPD<<8)|LCD_HFPD);	//Vertical and horizontal front porch period 
+	SPI_2825_WrReg(0xb4, LCD_XSIZE_TFT);
+	SPI_2825_WrReg(0xb5, LCD_YSIZE_TFT);
 	SPI_2825_WrReg(0xb6, 0x0003);				//Video mode and video pixel format 
 //MIPI lane configuration
 SPI_2825_WrCmd(0xDE);//¿¿¿
