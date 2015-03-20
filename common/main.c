@@ -307,7 +307,7 @@ void main_loop (void)
 
 #ifdef CONFIG_SSD2828
 	SPI_Init();
-	Init_SSD2805_SPI();
+	Init_SSD2805();
 #endif
 
 #ifdef CONFIG_BOOTCOUNT_LIMIT
