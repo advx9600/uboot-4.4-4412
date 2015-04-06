@@ -27,6 +27,7 @@ LIB	= $(obj)libcommon.o
 
 # core
 COBJS-y += main.o
+COBJS-$(CONFIG_SSD2828) += SSD2828-SPI-1.o
 COBJS-$(CONFIG_S3C_USBD) += cmd_usbd.o
 COBJS-$(CONFIG_FASTBOOT) += cmd_fastboot.o
 COBJS-$(CONFIG_EXYNOS_USBD3) += cmd_usbd3.o
