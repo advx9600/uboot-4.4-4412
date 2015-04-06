@@ -58,6 +58,29 @@ fi
 #${MKBL2} ${E4412_UBOOT} bl2.bin 14336
 
 ####################################
+# make partition
+if [ 1 -eq 0 ];then
+partition1="${1}1"
+partition2="${1}2"
+partition3="${1}3"
+partition4="${1}4"
+echo "sd_fdisk $1" 
+../sd_fdisk $1
+
+dd iflag=dsync oflag=dsync if=sd_mbr.dat of=$1
+rm sd_mbr.dat
+
+# format
+umount $partition1 2> /dev/null
+umount $partition2 2> /dev/null
+umount $partition3 2> /dev/null
+umount $partition4 2> /dev/null
+
+echo "mkfs.vfat -F 32 $partition1"
+mkfs.vfat -F 32 $partition1
+fi
+
+####################################
 # fusing images
 
 signed_bl1_position=1
@@ -65,8 +88,8 @@ bl2_position=31
 uboot_position=63
 tzsw_position=719
 
-echo "erase flash"
-dd if=/dev/zero of=$1 count=4000
+#echo "erase flash"
+#dd if=/dev/zero of=$1 count=4000
 
 if [ 1 -eq 1 ];then
 #<BL1 fusing>
