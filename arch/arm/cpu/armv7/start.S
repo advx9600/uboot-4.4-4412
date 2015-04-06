@@ -113,6 +113,15 @@ reset:
 	/*
 	 * set the cpu to SVC32 mode
 	 */
+	/* light lcd8
+	ldr     r0, =0x11000C40
+        ldr     r1, =0x11111111
+	str     r1, [r0]
+	ldr     r0, =0x11000C44
+        ldr     r1, =0xF
+	str     r1, [r0]
+	*/
+
 	mrs	r0, cpsr
 	bic	r0, r0, #0x1f
 	orr	r0, r0, #0xd3
