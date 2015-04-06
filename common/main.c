@@ -305,6 +305,11 @@ void main_loop (void)
 	trab_vfd (bmp);
 #endif	/* CONFIG_VFD && VFD_TEST_LOGO */
 
+#ifdef CONFIG_SSD2828
+	SPI_Init();
+	Init_SSD2805();
+#endif
+
 #ifdef CONFIG_BOOTCOUNT_LIMIT
 	bootcount = bootcount_load();
 	bootcount++;
