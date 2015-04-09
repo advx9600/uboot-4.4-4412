@@ -482,11 +482,12 @@ static int write_to_ptn(struct fastboot_ptentry *ptn, unsigned int addr, unsigne
 #endif
 
 #if defined(CFG_FASTBOOT_SDMMCBSP)
-#if defined(CONFIG_S5P6450) && !defined(CONFIG_EMMC_4_4)
+#if (defined(CONFIG_S5P6450) && !defined(CONFIG_EMMC_4_4)) || defined(CONFIG_SD_CARD_BOOT_AUTO_FLASH_ALL)
 #define	DEV_NUM 1
 #else
 #define	DEV_NUM 0
 #endif
+
 static int write_to_ptn_sdmmc(struct fastboot_ptentry *ptn, unsigned int addr, unsigned int size)
 {
 	int ret = 1;
@@ -592,7 +593,11 @@ static int write_to_ptn_sdmmc(struct fastboot_ptentry *ptn, unsigned int addr, u
 		/* use the partition name that can be understood by a command, movi */
 		if (!strcmp(ptn->name, "bootloader"))
 		{
+			#ifdef CONFIG_SD_CARD_BOOT_AUTO_FLASH_ALL
+			if (1){
+			#else
 			if (INF_REG3_REG == 7){
+			#endif
 				argv[2] = part2;
 				argv[3] = part;
 				argv[4] = dev_num;
@@ -600,7 +605,11 @@ static int write_to_ptn_sdmmc(struct fastboot_ptentry *ptn, unsigned int addr, u
 				argc = 6;
 				strncpy(part2, "zero", 7);
 				strncpy(part, "u-boot", 7);
+				#ifdef CONFIG_SD_CARD_BOOT_AUTO_FLASH_ALL
+				sprintf(run_cmd,"emmc open 1");
+				#else
 				sprintf(run_cmd,"emmc open 0");
+				#endif
 				run_command(run_cmd, 0);
 			} 
 			else
@@ -609,14 +618,22 @@ static int write_to_ptn_sdmmc(struct fastboot_ptentry *ptn, unsigned int addr, u
 		}
 		else if (!strcmp(ptn->name, "fwbl1"))
 		{
+			#ifdef CONFIG_SD_CARD_BOOT_AUTO_FLASH_ALL
+			if (1){
+			#else
 			if (INF_REG3_REG == 7){
+			#endif
 				argv[2] = part2;
 				argv[3] = ptn->name;
 				argv[4] = dev_num;
 				argv[5] = buffer;
 				argc = 6;
 				strncpy(part2, "zero", 7);
+				#ifdef CONFIG_SD_CARD_BOOT_AUTO_FLASH_ALL
+				sprintf(run_cmd,"emmc open 1");
+				#else
 				sprintf(run_cmd,"emmc open 0");
+				#endif
 				run_command(run_cmd, 0);
 			} 
 			else
@@ -625,14 +642,22 @@ static int write_to_ptn_sdmmc(struct fastboot_ptentry *ptn, unsigned int addr, u
 		}
 		else if (!strcmp(ptn->name, "bl2"))
 		{
+			#ifdef CONFIG_SD_CARD_BOOT_AUTO_FLASH_ALL
+			if (1){
+			#else
 			if (INF_REG3_REG == 7){
+			#endif
 				argv[2] = part2;
 				argv[3] = ptn->name;
 				argv[4] = dev_num;
 				argv[5] = buffer;
 				argc = 6;
 				strncpy(part2, "zero", 7);
+				#ifdef CONFIG_SD_CARD_BOOT_AUTO_FLASH_ALL
+				sprintf(run_cmd,"emmc open 1");
+				#else
 				sprintf(run_cmd,"emmc open 0");
+				#endif
 				run_command(run_cmd, 0);
 			} 
 			else
@@ -641,14 +666,22 @@ static int write_to_ptn_sdmmc(struct fastboot_ptentry *ptn, unsigned int addr, u
 		}
 		else if (!strcmp(ptn->name, "tzsw"))
 		{
+			#ifdef CONFIG_SD_CARD_BOOT_AUTO_FLASH_ALL
+			if (1){
+			#else
 			if (INF_REG3_REG == 7){
+			#endif
 				argv[2] = part2;
 				argv[3] = ptn->name;
 				argv[4] = dev_num;
 				argv[5] = buffer;
 				argc = 6;
 				strncpy(part2, "zero", 7);
+				#ifdef CONFIG_SD_CARD_BOOT_AUTO_FLASH_ALL
+				sprintf(run_cmd,"emmc open 1");
+				#else
 				sprintf(run_cmd,"emmc open 0");
+				#endif
 				run_command(run_cmd, 0);
 			} 
 			else
@@ -680,9 +713,18 @@ static int write_to_ptn_sdmmc(struct fastboot_ptentry *ptn, unsigned int addr, u
 
 		ret = do_movi(NULL, 0, argc, argv);
 
+		#ifdef CONFIG_SD_CARD_BOOT_AUTO_FLASH_ALL
+		if ((!strcmp(ptn->name, "fwbl1") || !strcmp(ptn->name, "bootloader") ||
+					 !strcmp(ptn->name, "bl2") || !strcmp(ptn->name, "tzsw"))){
+		#else
 		if (INF_REG3_REG == 7 && (!strcmp(ptn->name, "fwbl1") || !strcmp(ptn->name, "bootloader") ||
 					 !strcmp(ptn->name, "bl2") || !strcmp(ptn->name, "tzsw"))){
+		#endif
+			#ifdef CONFIG_SD_CARD_BOOT_AUTO_FLASH_ALL
+			sprintf(run_cmd,"emmc close 1");
+			#else
 			sprintf(run_cmd,"emmc close 0");
+			#endif
 			run_command(run_cmd, 0);
 		}
 
@@ -2071,7 +2113,115 @@ unsigned int fastboot_flash_get_ptn_count(void)
 }
 
 
+#define ARRAYSIZE(a) (sizeof(a)/sizeof(a[0]))
+static int htoi(const char* str)
+{
+    int i;
+    int val=0;
+    for (i=0;i<strlen(str);i++)
+    {
+        char c = str[i];
+        int bitVal=c-'0'&0xf;
+        if (c>='A' && c<='F'){
+                bitVal=10+(c-'A'&0xf);
+        }else if (c>='a' && c<='z'){
+                bitVal=10+(c-'a'&0xf);
+        }
+        val = val*16+bitVal;
+    }
+    return val;
+}
+static void machine_flash_clean()
+{
+	if (run_command("mmc erase boot 1 0 0",0) !=1){
+           printf("run mmc erase boot 1 0 0 failed!\n");
+           goto run_cmd_failed;
+        }
 
+        if (run_command("mmc erase user 1 0 0",0)!=1){
+           printf("run mmc erase user 1 0 0 failed!\n");
+           goto run_cmd_failed;
+        }
+
+        if (run_command("fdisk -c 1 512 1000 300",0)){
+           printf("run fdisk -c 1 512 1000 300 failed!\n");
+           goto run_cmd_failed;
+        }
+	#if 1
+        if (run_command("fatformat mmc 1:1",0)){
+           printf("fatformat mmc 0:1 failed!\n");
+           goto run_cmd_failed;
+        }
+        if (run_command("ext3format mmc 1:3",0)){
+           printf("ext3format mmc 0:3!\n");
+           goto run_cmd_failed;
+        }
+        if (run_command("ext3format mmc 1:4",0)){
+           printf("ext3format mmc 0:4 failed!\n");
+           goto run_cmd_failed;
+        }
+        #endif
+
+	return;
+
+run_cmd_failed:
+	printf("run cmd failed!\n");
+	while(1);
+}
+
+void sdcard_boot_auto_flash_all()
+{
+	int i,ret;
+	char cmd[100];
+	char *env;
+	char names[][50]={"bl1.bin","bl2.bin","tzsw.bin","u-boot.bin",\
+			"zImage","ramdisk-uboot.img","system.img"};
+	char alias[][50]={"fwbl1","bl2","tzsw","bootloader",\
+			"kernel","ramdisk","system"};
+	struct fastboot_ptentry *ptn;
+
+	if (INF_REG3_REG != BOOT_MMCSD){ // only sdcard boot do
+	    printf("boot is not from sdcard\n");
+	    goto run_cmd_failed;
+	}
+
+	machine_flash_clean();
+
+	if (set_partition_table_sdmmc()){
+	    printf("set_partition_table_sdmmc failed!\n");
+	    goto run_cmd_failed;
+	}
+
+	for (i=0;i<ARRAYSIZE(names);i++)
+	{
+	    sprintf(cmd,"fatload mmc 0 0x48000000 /rpdzkj/%s",\
+                        names[i]);
+	    if (run_command(cmd,0)){
+                goto run_cmd_failed;
+            }
+	    if (!(env=getenv("filesize"))){
+                printf("getenv filesize failed!\n");
+                break;
+            }
+	    ptn = fastboot_flash_find_ptn(alias[i]);
+	    if (ptn == NULL){
+		printf("fastboot_flash_find_ptn faleid!\n");
+		goto run_cmd_failed;
+	    }
+	  
+	    if (ret = write_to_ptn_sdmmc(ptn,(char*)0x48000000,htoi(env))){
+		printf("write_to_ptn_sdmmc:%d\n",ret);
+		goto run_cmd_failed;
+	    }
+	}
+
+	printf("\nflash in cmd_fastboot.c OK\n");
+	while(1);
+
+run_cmd_failed:
+	printf("run cmd failed!\n");
+	while(1);
+}
 #endif	/* CONFIG_FASTBOOT */
 
 

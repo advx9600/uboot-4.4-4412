@@ -305,6 +305,10 @@ void main_loop (void)
 	trab_vfd (bmp);
 #endif	/* CONFIG_VFD && VFD_TEST_LOGO */
 
+#ifdef CONFIG_SD_CARD_BOOT_AUTO_FLASH_ALL
+	sdcard_boot_auto_flash_all();
+#endif
+
 #ifdef CONFIG_SSD2828
 	SPI_Init();
 	Init_SSD2805();
