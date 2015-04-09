@@ -71,7 +71,7 @@ int write_raw_chunk(char* data, unsigned int sector, unsigned int sector_size) {
 
 	ext4_printf("write raw data in %d size %d \n", sector, sector_size);
 	#ifdef CONFIG_SD_CARD_BOOT_AUTO_FLASH_ALL
-	sprintf(run_cmd,"mmc write 1 0x%x 0x%x 0x%x", (int)data, sector, sector_
+	sprintf(run_cmd,"mmc write 1 0x%x 0x%x 0x%x", (int)data, sector, sector_size);
 	#else
 	sprintf(run_cmd,"mmc write 0 0x%x 0x%x 0x%x", (int)data, sector, sector_size);
 	#endif
