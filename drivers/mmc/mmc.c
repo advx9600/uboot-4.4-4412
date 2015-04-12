@@ -259,7 +259,7 @@ free_buffer:
 	return err;
 }
 
-static ulong mmc_bread(int dev_num, ulong start, lbaint_t blkcnt, void *dst)
+static ulong mmc_bread_a(int dev_num, ulong start, lbaint_t blkcnt, void *dst)
 {
 	int err;
 	struct mmc_cmd cmd;
@@ -341,6 +341,44 @@ if (strncmp(mmc->name, "S5P_MSHC", 8) != 0) {
 	}
 
 	return blkcnt;
+}
+
+static ulong mmc_bread(int dev_num, ulong start, lbaint_t blkcnt, void *dst)
+{
+	const unsigned int max_blocks=0xffff; // smdk4412 datasheet defined
+	if (blkcnt > max_blocks){
+	    int i,ret,total=0;
+	    const int con_blkcnt=blkcnt;
+	    
+	    for (i=0;i< con_blkcnt/max_blocks ;i++)
+	    {
+		start += i ? max_blocks:0;
+		dst +=  i ? max_blocks * 512:0;
+		blkcnt = max_blocks;
+	printf("start:0x%x,dst:0x%x,blkcnt:0x%x\n",start,dst,blkcnt);
+		if ((ret= mmc_bread_a(dev_num, start,blkcnt, dst)) < 1){
+		   printf("mmc_bread_a failed!\n");
+		   return -1;
+		}
+		total += ret;
+	    }
+
+	    if (con_blkcnt%max_blocks){
+		start += max_blocks;
+		dst +=   max_blocks * 512;
+		blkcnt = con_blkcnt % max_blocks;
+	printf("start:0x%x,dst:0x%x,blkcnt:0x%x\n",start,dst,blkcnt);
+		if ((ret= mmc_bread_a(dev_num, start,blkcnt, dst)) < 1){
+		   printf("mmc_bread_a failed!\n");
+		   return -1;
+		}
+		total += ret;
+	    }
+
+	    return total;
+	}else{
+		return mmc_bread_a(dev_num, start,blkcnt, dst);
+	}
 }
 
 ulong movi_write(int dev_num, ulong start, lbaint_t blkcnt, void *src)
