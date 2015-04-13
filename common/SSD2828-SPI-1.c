@@ -636,7 +636,7 @@ SPI_WriteData(0x03);//11=4LANE 10=3LANE 01=2LANE 00=1LANE
 SPI_WriteData(0x00);
 
 SPI_2825_WrCmd(0xD6);//  05=BGR  04=RGB
-SPI_WriteData(0x04);//D0=0=RGB 1:BGR D1=1=Most significant byte sent first
+SPI_WriteData(0x05);//D0=0=RGB 1:BGR D1=1=Most significant byte sent first
 SPI_WriteData(0x00);
 
 SPI_2825_WrCmd(0xB7);
