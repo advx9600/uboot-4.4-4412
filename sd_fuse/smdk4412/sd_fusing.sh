@@ -91,7 +91,7 @@ tzsw_position=719
 #echo "erase flash"
 #dd if=/dev/zero of=$1 count=4000
 
-if [ 1 -eq 1 ];then
+if [ 1 -eq 0 ];then
 #<BL1 fusing>
 echo "---------------------------------------"
 echo "BL1 fusing"
@@ -99,25 +99,32 @@ echo "BL1 fusing"
 dd iflag=dsync oflag=dsync if=../../bl1.bin of=$1 seek=$signed_bl1_position
 fi
 
-if [ 1 -eq 1 ];then
+if [ 1 -eq 0 ];then
 #<BL2 fusing>
 echo "---------------------------------------"
 echo "BL2 fusing"
 dd iflag=dsync oflag=dsync if=../../bl2.bin of=$1 seek=$bl2_position
 fi
 
-if [ 1 -eq 1 ];then
+if [ 1 -eq 0 ];then
 echo "---------------------------------------"
 echo "u-boot fusing"
 echo "dd iflag=dsync oflag=dsync if=${E4412_UBOOT} of=$1 seek=$uboot_position"
 dd iflag=dsync oflag=dsync if=${E4412_UBOOT} of=$1 seek=$uboot_position
 fi
 
-if [ 1 -eq 1 ];then
+if [ 1 -eq 0 ];then
 #<TrustZone S/W fusing>
 echo "---------------------------------------"
 echo "TrustZone S/W fusing"
 dd iflag=dsync oflag=dsync if=../../tzsw.bin of=$1 seek=$tzsw_position
+fi
+
+if [ 1 -eq 1 ];then
+#<Superboot fusing>
+echo "---------------------------------------"
+echo "super_boot fusing"
+dd iflag=dsync oflag=dsync if=super_boot.bin of=$1 seek=$signed_bl1_position
 fi
 
 #<flush to disk>
